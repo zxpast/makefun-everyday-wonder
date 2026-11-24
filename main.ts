@@ -2,7 +2,7 @@
 // Entry: a single sentence (<=200 characters) written to /output/entry.txt.
 // Constant writer: deterministic, stdlib only, no network, no Date, no random.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const ENTRY =
   "At 3 a.m. the fridge hummed a note so low the cat sat up, tilted her head, and answered it in the same key.";
@@ -26,6 +26,9 @@ function selfCheck(text: string): void {
   if (!text.endsWith(".")) {
     throw new Error("gate fail: entry must end with a full stop");
   }
+  if (text.includes("  ")) {
+    throw new Error("gate fail: entry must not contain a double space");
+  }
   if (text.includes("!") || text.includes("?")) {
     throw new Error("gate fail: entry must be a single sentence");
   }
@@ -34,3 +37,8 @@ function selfCheck(text: string): void {
 selfCheck(ENTRY);
 mkdirSync("/output", { recursive: true });
 writeFileSync("/output/entry.txt", ENTRY, "utf8");
+// Read-back: the written bytes must be exactly the entry, no trailing
+// newline or encoding surprise.
+if (readFileSync("/output/entry.txt", "utf8") !== ENTRY) {
+  throw new Error("gate fail: written entry differs from ENTRY");
+}
